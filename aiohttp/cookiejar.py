@@ -52,11 +52,11 @@ class CookieJar(AbstractCookieJar):
 
     def __init__(self, *, unsafe: bool=False) -> None:
         self._loop = get_running_loop()
-        self._cookies = defaultdict(SimpleCookie)  #type: DefaultDict[str, SimpleCookie[str]]  # noqa
-        self._host_only_cookies = set()  # type: Set[Tuple[str, str]]
+        self._cookies = defaultdict(SimpleCookie)  #type: DefaultDict[Tuple[str, str], SimpleCookie]  # noqa
+        self._host_only_cookies = set()  # type: Set[Tuple[str, str, str]]
         self._unsafe = unsafe
         self._next_expiration = next_whole_second()
-        self._expirations = {}  # type: Dict[Tuple[str, str], datetime.datetime]  # noqa: E501
+        self._expirations = {}  # type: Dict[Tuple[str, str, str], datetime.datetime]  # noqa: E501
 
     def save(self, file_path: PathLike) -> None:
         file_path = pathlib.Path(file_path)
@@ -92,11 +92,11 @@ class CookieJar(AbstractCookieJar):
         to_del = []
         cookies = self._cookies
         expirations = self._expirations
-        for (domain, name), when in expirations.items():
+        for (domain, path, name), when in expirations.items():
             if when <= now:
-                cookies[domain].pop(name, None)
-                to_del.append((domain, name))
-                self._host_only_cookies.discard((domain, name))
+                cookies[(domain, path)].pop(name, None)
+                to_del.append((domain, path, name))
+                self._host_only_cookies.discard((domain, path, name))
             else:
                 next_expiration = min(next_expiration, when)
         for key in to_del:
@@ -108,10 +108,10 @@ class CookieJar(AbstractCookieJar):
         except OverflowError:
             self._next_expiration = self.MAX_TIME
 
-    def _expire_cookie(self, when: datetime.datetime, domain: str, name: str
-                       ) -> None:
+    def _expire_cookie(self, when: datetime.datetime, domain: str,
+                       path: str, name: str) -> None:
         self._next_expiration = min(self._next_expiration, when)
-        self._expirations[(domain, name)] = when
+        self._expirations[(domain, path, name)] = when
 
     def update_cookies(self,
                        cookies: LooseCookies,
@@ -176,7 +176,7 @@ class CookieJar(AbstractCookieJar):
                     except OverflowError:
                         max_age_expiration = self.MAX_TIME
                     self._expire_cookie(max_age_expiration,
-                                        domain, name)
+                                        domain, path, name)
                 except ValueError:
                     cookie["max-age"] = ""
 
@@ -186,11 +186,11 @@ class CookieJar(AbstractCookieJar):
                     expire_time = self._parse_date(expires)
                     if expire_time:
                         self._expire_cookie(expire_time,
-                                            domain, name)
+                                            domain, path,  name)
                     else:
                         cookie["expires"] = ""
 
-            self._cookies[domain][name] = cookie
+            self._cookies[(domain, path)][name] = cookie
 
         self._do_expiration()
 

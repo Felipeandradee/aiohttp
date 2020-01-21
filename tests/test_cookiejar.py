@@ -562,6 +562,25 @@ class TestCookieJarSafe(TestCookieJarBase):
             "path1-cookie"
         })
 
+    def test_path_filter_diff_folder_same_name(self) -> None:
+
+        async def make_jar():
+            return CookieJar(unsafe=True)
+
+        jar = self.loop.run_until_complete(make_jar())
+
+        jar.update_cookies(SimpleCookie("path-cookie=zero; Domain=pathtest.com; Path=/; "))
+        jar.update_cookies(SimpleCookie("path-cookie=one; Domain=pathtest.com; Path=/one; "))
+        self.assertEqual(len(jar), 2)
+
+        jar_filtred = jar.filter_cookies(URL("http://pathtest.com/"))
+        self.assertEqual(len(jar_filtred), 1)
+        self.assertEqual(jar_filtred['path-cookie'].value, "zero")
+
+        jar_filtred = jar.filter_cookies(URL("http://pathtest.com/one"))
+        self.assertEqual(len(jar_filtred), 1)
+        self.assertEqual(jar_filtred['path-cookie'].value, "one")
+
     def test_path_value(self) -> None:
         _, cookies_received = (
             self.request_reply_with_same_url("http://pathtest.com/"))
