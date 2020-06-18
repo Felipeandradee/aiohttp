@@ -65,11 +65,8 @@ class ve_build_ext(build_ext):
 
 
 txt = (here / 'aiohttp' / '__init__.py').read_text('utf-8')
-try:
-    version = re.findall(r"^__version__ = '([^']+)'\r?$",
-                         txt, re.M)[0]
-except IndexError:
-    raise RuntimeError('Unable to determine version.')
+
+__version__ = '3.6.2'
 
 install_requires = [
     'attrs>=17.3.0',
