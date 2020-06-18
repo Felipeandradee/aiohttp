@@ -66,7 +66,6 @@ class ve_build_ext(build_ext):
 
 txt = (here / 'aiohttp' / '__init__.py').read_text('utf-8')
 
-version = '3.6.2'
 
 install_requires = [
     'attrs>=17.3.0',
@@ -92,8 +91,9 @@ tests_require = [
     'pytest-xdist',
 ]
 
+version = '3.6.2'
 
-args = dict(
+setup(
     name='aiohttp',
     version=version,
     description='Async http client/server framework (asyncio)',
@@ -147,13 +147,3 @@ args = dict(
     ext_modules=extensions,
     cmdclass=dict(build_ext=ve_build_ext),
 )
-
-try:
-    setup(**args)
-except BuildFailed:
-    print("************************************************************")
-    print("Cannot compile C accelerator module, use pure python version")
-    print("************************************************************")
-    del args['ext_modules']
-    del args['cmdclass']
-    setup(**args)
