@@ -66,7 +66,7 @@ class ve_build_ext(build_ext):
 
 txt = (here / 'aiohttp' / '__init__.py').read_text('utf-8')
 
-__version__ = '3.6.2'
+version = '3.6.2'
 
 install_requires = [
     'attrs>=17.3.0',
